@@ -23,11 +23,19 @@ const VoiceInput = () => {
         // resetTranscript(); // Clear the transcript
 
         const prompt = `Give me name of place from this text "${inputValue}", Find origin or start point and end point and identifier which can be either BOL,Bill of load, Booking number, Housebill or lading from this text and return me response in json format { origin, destionation, identifier }`;
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(prompt, {
+            responseMimeType: 'application/json',
+        });
         const response = await result.response;
         const text = response.text();
-        // setResponse(text);
-        console.log(text);
+        const filteredText = text.replace(/```json\n|```/g, '');
+
+        try {
+            const jsonResponse = JSON.parse(filteredText); // Ensure valid JSON
+            console.log(jsonResponse)
+          } catch (error) {
+            console.error("Invalid JSON format:", text);
+          }
         
         setInputValue(''); // Clear the input value
     };
