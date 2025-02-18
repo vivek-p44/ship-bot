@@ -29,10 +29,24 @@ const VoiceInput = () => {
         const response = await result.response;
         const text = response.text();
         const filteredText = text.replace(/```json\n|```/g, '');
+        const token = ``
 
         try {
             const jsonResponse = JSON.parse(filteredText); // Ensure valid JSON
-            console.log(jsonResponse)
+            const request = await fetch('https://na12.api.project44.com/api/v4/shipments/tracking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Tenant-Id': '1728281920130',
+                    'X-User-Id': '-1',
+                    'Authorization': `Bearer ${token}`,
+                    'X-Tenant-Uuid': '92ca34e7-1d92-4f65-8f02-41619996551d',
+                    // "Access-Control-Allow-Origin": "*"
+                },
+                body: JSON.stringify(jsonResponse),
+            });
+            const data = await request.json();
+            console.log(data);
           } catch (error) {
             console.error("Invalid JSON format:", text);
           }
