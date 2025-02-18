@@ -48,6 +48,7 @@ const VoiceInput = () => {
                     variant="outlined"
                     fullWidth
                     multiline
+                    maxRows={4}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     sx={{
