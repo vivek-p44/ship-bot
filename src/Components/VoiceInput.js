@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import getPrompt from './shipment_payload_generation_prompt';
 import { TextField, Box, Paper, Button } from '@mui/material';
 // import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
@@ -22,56 +23,7 @@ const VoiceInput = () => {
         console.log('Message sent:', inputValue);
         // resetTranscript(); // Clear the transcript
 
-        const prompt = `For this put text: "${inputValue}.\n", 
-        Extract following things from the input text:
-         1. origin: origin city name (including common abbreviations like SF is San Fransisco),
-         2. destination: destination city name (including common abbreviations like SF is San Fransisco), 
-         3. identifier: identifier can be either bill of lading (can be referred as BOL), booking number (can be referred as BN) or House bill of lading (can be referred as HBOL), by default it wiill be BOL with value BOL_123
-         4. carrier_scac: carriers SCAC code is generally a 4 letter code of uppercase alphabets, if customer provides a carrier name, take first 4 letters of it, for example if carrier name is "Maersk Line", carrier_scac will be "MAER". If no carrier is provided, take "CARR" as default value. 
-        Get me 5 letter UN/LOCODE for the origin and destination city as origin_locode and destination_locode. 
-        Return me a response in following json format:
-        { 
-            identifiers: [
-                {
-                    "type": "BILL_OF_LADING" or "BOOKING_NUMBER" or "HOUSE_BILL_OF_LADING",
-                    "value": <identifier>
-                },
-                {
-                    "type": assign value as "FFW_SCAC", if identifier is HOUSE_BILL_OF_LADING, else assign value as "CARRIER_SCAC",
-                    "value": <carrier>
-                }
-            ],
-            routeInfo: {
-                "stops": [
-                    {
-                        "type": "ORIGIN",
-                        "location": {
-                            "name": <origin>,
-                            "identifiers": [
-                                {
-                                    "type": "PORT_UN_LOCODE",
-                                    "value": <origin_locode>
-                                }
-                            ],
-                            "address": {}
-                        }
-                    },
-                    {
-                        "type": "DESTINATION",
-                        "location": {
-                            "name": <destination>,
-                            "identifiers": [
-                                {
-                                    "type": "PORT_UN_LOCODE",
-                                    "value": <destination_locode>
-                                }
-                             ],
-                            "address": {}
-                        }
-                    }
-                ]
-            }
-        }`;
+        const prompt = getPrompt(inputValue);
 
         try {
             const result = await model.generateContent(prompt, {
