@@ -4,8 +4,8 @@ Given the input text: "${inputValue}", extract the following details:
 1. **Origin**: Extract the origin city name. If common abbreviations are used (e.g., "SF" for San Francisco), convert them to their full names.
 2. **Destination**: Extract the destination city name. Apply the same abbreviation expansion rule as the origin.
 3. **Identifier**: Identify the shipment identifier type:
-   - It can be a **Bill of Lading (BOL)**, **Booking Number (BN)**, or **House Bill of Lading (HBOL)**.
-   - Default identifier: **BOL_123** (Bill of Lading).
+   - type: It can be a **Bill of Lading (BOL)**, **Booking Number (BN)**, or **House Bill of Lading (HBOL)**.
+   - value: Get the value from the input if provided. Value should not contain any spaces. Default identifier: **BOL_123** (Bill of Lading).
 4. **Carrier SCAC**: Extract the carrier’s **SCAC code** (a 4-letter uppercase code).
    - If a carrier name is provided, use the **first four letters** (e.g., "Maersk Line" → "MAER").
    - If no carrier is provided, use **"CARR"** as the default value.
@@ -21,7 +21,7 @@ Given the input text: "${inputValue}", extract the following details:
      3. **PORT_OF_DISCHARGE**: Find the nearest port to the destination city.
      4. **DESTINATION**
      - If the identifier is HBOL, keep all stops in same order.
-     - If the identifier is BOL or BN, only include PORT_OF_LOADING and PORT_OF_DISCHARGE stops.
+     - If the identifier is **Bill of Lading (BOL)** or **Booking Number (BN)**, only keep 2 stops: PORT_OF_LOADING and PORT_OF_DISCHARGE.
 8. **UN/LOCODE Extraction**:
    - Retrieve the **5-letter UN/LOCODE** for both the origin and destination cities.
    

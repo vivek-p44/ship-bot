@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import getPrompt from './shipment_payload_generation_prompt';
-import { TextField, Box, Paper, Button } from '@mui/material';
-// import MicIcon from '@mui/icons-material/Mic';
+import { TextField, Box, Paper, Button, IconButton } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -10,19 +10,42 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 
 const VoiceInput = () => {
     const [inputValue, setInputValue] = useState('');
+    const [listening, setListening] = useState(false);
+    const recognitionRef = useRef(null);
+
+    useEffect(() => {
+        if (!('webkitSpeechRecognition' in window)) {
+            console.error('Speech recognition not supported in this browser.');
+            return;
+        }
+        const recognition = new window.webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setInputValue(transcript);
+        };
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+        };
+        recognition.onend = () => {
+            setListening(false);
+        };
+        recognitionRef.current = recognition;
+    }, []);
 
     const toggleVoiceInput = () => {
-        // if (listening) {
-        //     SpeechRecognition.stopListening();
-        // } else {
-        //     SpeechRecognition.startListening({ continuous: true });
-        // }
+        if (!recognitionRef.current) return;
+        if (listening) {
+            recognitionRef.current.stop();
+        } else {
+            recognitionRef.current.start();
+        }
+        setListening(!listening);
     };
 
     const handleSend = async () => {
         console.log('Message sent:', inputValue);
-        // resetTranscript(); // Clear the transcript
-
         const prompt = getPrompt(inputValue);
 
         try {
@@ -33,8 +56,7 @@ const VoiceInput = () => {
             const text = await response.text();
             console.log('Json:', text);
             const filteredText = text.replace(/```json\n|```/g, '');
-            const jsonResponse = JSON.parse(filteredText); // Ensure valid JSON
-
+            const jsonResponse = JSON.parse(filteredText);
 
             const request = await fetch('http://localhost:5050/proxy/shipment', {
                 method: 'POST',
@@ -55,7 +77,7 @@ const VoiceInput = () => {
             console.error("Error:", error);
         }
 
-        setInputValue(''); // Clear the input value
+        setInputValue('');
     };
 
     return (
@@ -78,6 +100,9 @@ const VoiceInput = () => {
                         marginRight: 1,
                     }}
                 />
+                <IconButton onClick={toggleVoiceInput} color={listening ? "secondary" : "primary"}>
+                    <MicIcon />
+                </IconButton>
                 <Button
                     variant="contained"
                     color="primary"
@@ -99,4 +124,4 @@ const VoiceInput = () => {
     );
 };
 
-export default VoiceInput; 
+export default VoiceInput;

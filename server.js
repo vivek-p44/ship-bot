@@ -24,7 +24,8 @@ app.post('/proxy/shipment', async (req, res) => {
         );
         res.json(response.data);
     } catch (error) {
-        console.error("Error:", error.response?.data || error.message);
+        console.error("Error:", error.response ? error.response.data : "No response from server");
+        console.error("Error status:", error.response ? error.response.status : "Unknown status");
         res.status(error.response?.status || 500).json({
             error: error.response?.data || "Server error",
         });
