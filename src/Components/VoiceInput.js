@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import getPrompt from './shipment_payload_generation_prompt';
-import { TextField, Box, Paper, Button, IconButton } from '@mui/material';
+import getUnifiedPrompt from './shipment_payload_generation_prompt';
+import getTlPrompt from './tl_payload_generation_prompt';
+import { TextField, Box, Paper, Button, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -11,7 +12,9 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 const VoiceInput = () => {
     const [inputValue, setInputValue] = useState('');
     const [listening, setListening] = useState(false);
+    const [mode, setMode] = useState('');
     const recognitionRef = useRef(null);
+    const modes = ['Ocean D2D', 'Ocean P2P', 'TL'];
 
     useEffect(() => {
         if (!('webkitSpeechRecognition' in window)) {
@@ -45,8 +48,17 @@ const VoiceInput = () => {
     };
 
     const handleSend = async () => {
-        console.log('Message sent:', inputValue);
-        const prompt = getPrompt(inputValue);
+        const now = new Date();
+        const currentDate = now.toISOString().slice(0, 19); // Get "YYYY-MM-DDTHH:mm:ss"
+
+        console.log('Message sent:', inputValue, 'Mode:', mode, 'Date:', currentDate);
+
+        let prompt = getUnifiedPrompt(inputValue);
+        let url = 'http://localhost:5050/proxy/unified/shipment'
+        if (mode === 'TL') {
+            prompt = getTlPrompt(inputValue, currentDate);
+            url = 'http://localhost:5050/proxy/tl/shipment';
+        }
 
         try {
             const result = await model.generateContent(prompt, {
@@ -58,7 +70,7 @@ const VoiceInput = () => {
             const filteredText = text.replace(/```json\n|```/g, '');
             const jsonResponse = JSON.parse(filteredText);
 
-            const request = await fetch('http://localhost:5050/proxy/shipment', {
+            const request = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,8 +93,22 @@ const VoiceInput = () => {
     };
 
     return (
-        <Box sx={{ maxWidth: 600, margin: 'auto', padding: 2 }}>
+        <Box sx={{ maxWidth: 800, margin: 'auto', padding: 2 }}>
             <Paper elevation={3} sx={{ padding: 2, backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'flex-end' }}>
+                <FormControl variant="outlined" sx={{ minWidth: 140, marginRight: 1 }}>
+                    <InputLabel>Mode</InputLabel>
+                    <Select
+                        value={mode}
+                        onChange={(e) => setMode(e.target.value)}
+                        label="Mode"
+                    >
+                        {modes.map((mode) => (
+                            <MenuItem key={mode} value={mode}>
+                                {mode}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
                 <TextField
                     label="Type your message"
                     variant="outlined"
@@ -111,7 +137,7 @@ const VoiceInput = () => {
                     size="medium"
                     sx={{
                         borderRadius: '20px',
-                        minWidth: '40px',
+                        minWidth: '100px',
                         padding: '8px 16px',
                         boxShadow: 'none',
                         textTransform: 'none',
