@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import getUnifiedPrompt from './shipment_payload_generation_prompt';
 import getTlPrompt from './tl_payload_generation_prompt';
-import { TextField, Box, Paper, Button, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Box, Paper, Button, IconButton, Select, MenuItem, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -15,6 +15,7 @@ const VoiceInput = () => {
     const [mode, setMode] = useState('');
     const recognitionRef = useRef(null);
     const modes = ['Ocean D2D', 'Ocean P2P', 'TL'];
+    const [shipmentList, setShipmentList] = useState([]);
 
     useEffect(() => {
         if (!('webkitSpeechRecognition' in window)) {
@@ -81,6 +82,7 @@ const VoiceInput = () => {
             if (request.headers.get('Content-Type')?.includes('application/json')) {
                 const data = await request.json();
                 console.log("Data:", data);
+                setShipmentList([...shipmentList, data]);
             } else {
                 const text = await request.text();
                 console.error("Unexpected response format:", text);
@@ -146,6 +148,26 @@ const VoiceInput = () => {
                     Send
                 </Button>
             </Paper>
+            <Box sx={{ marginTop: 2 }}>
+                { shipmentList.length ? <><Typography variant="h6">Shipment List</Typography>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Tracking Number</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {shipmentList.map((shipment, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{shipment.shipment.trackingNumber}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </> : null}
+            </Box>
         </Box>
     );
 };
